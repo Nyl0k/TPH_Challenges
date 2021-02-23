@@ -8,7 +8,18 @@ s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((host, port))
 
 while True:
-    s.sendall(input("Message: ").encode('utf-8'))
-    r = s.recv(1024)
+    r = s.recv(1024).decode('utf-8')
 
-    print(f"Received {r.decode('utf-8')}")
+    if r:
+        port = int(r)
+    
+    break
+
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+s.connect((host, port))
+
+while True:
+    r = s.recv(1024).decode('utf-8')
+    if r:
+        print(r)

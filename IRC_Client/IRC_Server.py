@@ -3,50 +3,51 @@ import threading
 import random
 
 max_clients = 5
+socket_list = []
 thread_pool = []
-portList = []
-
-for i in range(max_clients): portList.append(random.randint(1001,9999))
 
 def director():
-    global portList
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    global socket_list
+    print("Initialized director")
+    for [sock, p] in socket_list:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        host = '127.0.0.1'
+        port = 1000
 
-    host = '127.0.0.1'
-    port = 1000
+        s.bind((host, port))
+        while True:
+            s.listen()
+            c, addr = s.accept()
+            break
+        print("New connection")
+        c.sendall(str(p).encode('utf-8'))
+        s.close()
 
-    s.bind((host, port))
-
+def sender(s):
+    print("Initialized sender")
     while True:
         s.listen()
-        c, addr = s.accept()
-        message = str(portList.pop(0)).encode('utf-8') if len(portList) > 0 else ("err".encode('utf-8'))
-        c.sendall(message)
-
-def receiver(port):
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-    host = '127.0.0.1'
-
-    s.bind((host, port))
-
-    s.listen()
-    c, addr = s.accept()
+        c, _ = s.accept()
+        break
+    
+    print("sending message")
 
     while True:
-        r = c.recv(1024)
-        if not r:
-            continue
-        c.sendall(r)
+        c.sendall("a".encode('utf-8'))
+
+for _ in range(max_clients):
+    s = socket.socket()
+    port = random.randint(1001,9999)
+    s.bind(('127.0.0.1', port))
+    socket_list.append([s, port])
 
 thread_pool.append(threading.Thread(target=director, daemon=True))
 
-for i in range(max_clients):
-    thread_pool.append(threading.Thread(target=receiver, daemon=True, kwargs={'port': portList[i]}))
-    thread_pool.append(threading.Thread(target=sender, daemon=True, kwargs={'port': portList[i]}))
+for [s, p] in socket_list:
+    thread_pool.append(threading.Thread(target=sender, daemon=True, kwargs={'s':s}))
 
 for thread in thread_pool:
     thread.start()
 
-for thread in thread_pool:
-    thread.join()
+while True:
+    continue
